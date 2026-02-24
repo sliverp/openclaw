@@ -25,6 +25,9 @@
     "prepack": "npm install --omit=dev"
   },
   "dependencies": {
+    "clawdbot": "*",
+    "moltbot": "*",
+    "openclaw": "*",
     "silk-wasm": "^3.7.1",
     "ws": "^8.18.0"
   },
@@ -32,11 +35,6 @@
     "@types/node": "^20.0.0",
     "@types/ws": "^8.5.0",
     "typescript": "^5.9.3"
-  },
-  "peerDependencies": {
-    "clawdbot": "*",
-    "moltbot": "*",
-    "openclaw": "*"
   },
   "bundledDependencies": [
     "silk-wasm",
