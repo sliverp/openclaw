@@ -107,7 +107,7 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
       tokenSource: account?.secretSource,
     }),
     // 关键：解析 allowFrom 配置，用于命令授权
-    resolveAllowFrom: ({ cfg, accountId }: { cfg: OpenClawConfig; accountId?: string }) => {
+    resolveAllowFrom: ({ cfg, accountId }) => {
       const account = resolveQQBotAccount(cfg, accountId);
       const allowFrom = account.config?.allowFrom ?? [];
       console.log(
@@ -116,8 +116,8 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
       return allowFrom.map((entry: string | number) => String(entry));
     },
     // 格式化 allowFrom 条目（移除 qqbot: 前缀，统一大写）
-    formatAllowFrom: ({ allowFrom }: { allowFrom: Array<string | number> }) =>
-      allowFrom
+    formatAllowFrom: ({ allowFrom }) =>
+      (allowFrom as Array<string | number>)
         .map((entry: string | number) => String(entry).trim())
         .filter(Boolean)
         .map((entry: string) => entry.replace(/^qqbot:/i, ""))
@@ -173,13 +173,13 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
      * - channel:channelid -> 频道
      * - 纯 openid（32位十六进制）-> 私聊
      */
-    normalizeTarget: (target: string) => {
+    normalizeTarget: (target: string): string | undefined => {
       // 去掉 qqbot: 前缀（如果有）
       const id = target.replace(/^qqbot:/i, "");
 
       // 检查是否是已知格式
       if (id.startsWith("c2c:") || id.startsWith("group:") || id.startsWith("channel:")) {
-        return { ok: true, to: `qqbot:${id}` };
+        return `qqbot:${id}`;
       }
 
       // 检查是否是纯 openid（32位十六进制，带连字符）
@@ -187,14 +187,11 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
       const openIdPattern =
         /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
       if (openIdPattern.test(id)) {
-        return { ok: true, to: `qqbot:c2c:${id}` };
+        return `qqbot:c2c:${id}`;
       }
 
       // 不认识的格式
-      return {
-        ok: false,
-        error: `Invalid QQ Bot target format: "${target}". Expected: qqbot:c2c:openid, qqbot:group:groupid, or openid (UUID format)`,
-      };
+      return undefined;
     },
     /**
      * 目标解析器配置
@@ -238,9 +235,8 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
       const account = resolveQQBotAccount(cfg, accountId);
       const result = await sendText({ to, text, accountId, replyToId, account });
       return {
-        channel: "qqbot",
-        messageId: result.messageId,
-        error: result.error ? new Error(result.error) : undefined,
+        channel: "qqbot" as const,
+        messageId: result.messageId ?? "",
       };
     },
     sendMedia: async ({ to, text, mediaUrl, accountId, replyToId, cfg }) => {
@@ -254,9 +250,8 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
         account,
       });
       return {
-        channel: "qqbot",
-        messageId: result.messageId,
-        error: result.error ? new Error(result.error) : undefined,
+        channel: "qqbot" as const,
+        messageId: result.messageId ?? "",
       };
     },
   },
@@ -353,24 +348,19 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
       lastConnectedAt: snapshot.lastConnectedAt ?? null,
       lastError: snapshot.lastError ?? null,
     }),
-    buildAccountSnapshot: ({
-      account,
-      runtime,
-    }: {
-      account?: ResolvedQQBotAccount;
-      runtime?: Record<string, unknown>;
-    }) => ({
-      accountId: account?.accountId ?? DEFAULT_ACCOUNT_ID,
-      name: account?.name,
-      enabled: account?.enabled ?? false,
-      configured: Boolean(account?.appId && account?.clientSecret),
-      tokenSource: account?.secretSource,
-      running: runtime?.running ?? false,
-      connected: runtime?.connected ?? false,
-      lastConnectedAt: runtime?.lastConnectedAt ?? null,
-      lastError: runtime?.lastError ?? null,
-      lastInboundAt: runtime?.lastInboundAt ?? null,
-      lastOutboundAt: runtime?.lastOutboundAt ?? null,
-    }),
+    buildAccountSnapshot: (params) => {
+      const account = params.account as ResolvedQQBotAccount | undefined;
+      const runtime = params.runtime;
+      return {
+        accountId: account?.accountId ?? DEFAULT_ACCOUNT_ID,
+        name: account?.name,
+        enabled: account?.enabled ?? false,
+        configured: Boolean(account?.appId && account?.clientSecret),
+        running: runtime?.running ?? false,
+        connected: runtime?.connected ?? false,
+        lastConnectedAt: runtime?.lastConnectedAt ?? null,
+        lastError: runtime?.lastError ?? null,
+      };
+    },
   },
 };

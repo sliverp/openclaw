@@ -143,7 +143,7 @@ export function applyQQBotAccountConfig(
             ? { clientSecretFile: input.clientSecretFile }
             : {}),
         ...(input.name ? { name: input.name } : {}),
-      },
+      } as Record<string, unknown>,
     };
   } else {
     // 如果没有设置过 allowFrom，默认设置为 ["*"]
@@ -171,7 +171,7 @@ export function applyQQBotAccountConfig(
             ...(input.name ? { name: input.name } : {}),
           },
         },
-      },
+      } as Record<string, unknown>,
     };
   }
 

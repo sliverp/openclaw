@@ -4,6 +4,7 @@
  * 消息组装和投递逻辑分别在 gateway-inbound.ts 和 gateway-deliver.ts
  */
 
+import type { OpenClawConfig } from "openclaw/plugin-sdk";
 import WebSocket from "ws";
 import {
   getAccessToken,
@@ -69,7 +70,7 @@ const MESSAGE_QUEUE_WARN_THRESHOLD = 800;
 export interface GatewayContext {
   account: ResolvedQQBotAccount;
   abortSignal: AbortSignal;
-  cfg: unknown;
+  cfg: OpenClawConfig;
   onReady?: (data: unknown) => void;
   onError?: (error: Error) => void;
   log?: {
@@ -269,7 +270,7 @@ export async function startGateway(ctx: GatewayContext): Promise<void> {
           channel: "qqbot",
           accountId: account.accountId,
           peer: {
-            kind: inbound.isGroup ? "group" : "dm",
+            kind: inbound.isGroup ? "group" : "direct",
             id: peerId,
           },
         });

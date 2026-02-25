@@ -3,14 +3,7 @@
  *
  * 提供 openclaw onboard 命令的交互式配置支持
  */
-import type {
-  ChannelOnboardingAdapter,
-  ChannelOnboardingStatus,
-  ChannelOnboardingStatusContext,
-  ChannelOnboardingConfigureContext,
-  ChannelOnboardingResult,
-  OpenClawConfig,
-} from "openclaw/plugin-sdk";
+import type { ChannelOnboardingAdapter, OpenClawConfig } from "openclaw/plugin-sdk";
 import {
   DEFAULT_ACCOUNT_ID,
   listQQBotAccountIds,
@@ -64,7 +57,7 @@ interface Prompter {
 export const qqbotOnboardingAdapter: ChannelOnboardingAdapter = {
   channel: "qqbot" as any,
 
-  getStatus: async (ctx: ChannelOnboardingStatusContext): Promise<ChannelOnboardingStatus> => {
+  getStatus: async (ctx) => {
     const cfg = ctx.cfg as OpenClawConfig;
     const configured = listQQBotAccountIds(cfg).some((accountId) => {
       const account = resolveQQBotAccount(cfg, accountId);
@@ -80,7 +73,7 @@ export const qqbotOnboardingAdapter: ChannelOnboardingAdapter = {
     };
   },
 
-  configure: async (ctx: ChannelOnboardingConfigureContext): Promise<ChannelOnboardingResult> => {
+  configure: async (ctx) => {
     const cfg = ctx.cfg as OpenClawConfig;
     const prompter = ctx.prompter as Prompter;
     const accountOverrides = ctx.accountOverrides as Record<string, string> | undefined;
@@ -152,7 +145,7 @@ export const qqbotOnboardingAdapter: ChannelOnboardingAdapter = {
               ...((next.channels?.qqbot as Record<string, unknown>) || {}),
               enabled: true,
               allowFrom: resolvedAccount.config?.allowFrom ?? ["*"],
-            },
+            } as Record<string, unknown>,
           },
         };
       } else {
@@ -238,7 +231,7 @@ export const qqbotOnboardingAdapter: ChannelOnboardingAdapter = {
               clientSecret,
               markdownSupport: enableMarkdown,
               allowFrom,
-            },
+            } as Record<string, unknown>,
           },
         };
       } else {
@@ -260,13 +253,13 @@ export const qqbotOnboardingAdapter: ChannelOnboardingAdapter = {
                   allowFrom,
                 },
               },
-            },
+            } as Record<string, unknown>,
           },
         };
       }
     }
 
-    return { success: true, cfg: next as any, accountId };
+    return { cfg: next, accountId };
   },
 
   disable: (cfg: unknown) => {

@@ -20,11 +20,10 @@ import * as fs from "node:fs";
 import * as http from "node:http";
 import * as path from "node:path";
 import * as url from "node:url";
+import { listKnownUsers, getKnownUser } from "../src/known-users.js";
 import {
   sendProactiveMessageDirect,
-  listKnownUsers,
   getKnownUsersStats,
-  getKnownUser,
   broadcastMessage,
 } from "../src/proactive.js";
 import type { ResolvedQQBotAccount } from "../src/types.js";
@@ -49,6 +48,8 @@ function loadAccount(accountId = "default"): ResolvedQQBotAccount | null {
           clientSecret: envClientSecret,
           enabled: true,
           secretSource: "env",
+          markdownSupport: false,
+          config: {},
         };
       }
       return null;
@@ -65,6 +66,8 @@ function loadAccount(accountId = "default"): ResolvedQQBotAccount | null {
           clientSecret: envClientSecret,
           enabled: true,
           secretSource: "env",
+          markdownSupport: false,
+          config: {},
         };
       }
       return null;
@@ -78,6 +81,8 @@ function loadAccount(accountId = "default"): ResolvedQQBotAccount | null {
         clientSecret: qqbot.clientSecret || envClientSecret,
         enabled: qqbot.enabled ?? true,
         secretSource: qqbot.clientSecret ? "config" : "env",
+        markdownSupport: false,
+        config: {},
       };
     }
 
@@ -89,6 +94,8 @@ function loadAccount(accountId = "default"): ResolvedQQBotAccount | null {
         clientSecret: accountConfig.clientSecret || qqbot.clientSecret || envClientSecret,
         enabled: accountConfig.enabled ?? true,
         secretSource: accountConfig.clientSecret ? "config" : "env",
+        markdownSupport: false,
+        config: {},
       };
     }
 
@@ -186,7 +193,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
 
     // GET /users - 列出已知用户
     if (pathname === "/users" && method === "GET") {
-      const type = query.type as "c2c" | "group" | "channel" | undefined;
+      const type = query.type as "c2c" | "group" | undefined;
       const accountId = query.accountId as string | undefined;
       const limit = query.limit ? parseInt(query.limit as string, 10) : undefined;
 
@@ -209,7 +216,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
       const type = (query.type as string) || "c2c";
       const accountId = (query.accountId as string) || "default";
 
-      const user = getKnownUser(type, openid, accountId);
+      const user = getKnownUser(accountId, openid, type as "c2c" | "group");
       if (user) {
         sendJson(res, 200, user);
       } else {

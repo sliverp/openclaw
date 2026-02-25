@@ -21,9 +21,9 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { listKnownUsers } from "../src/known-users.js";
 import {
   sendProactiveMessageDirect,
-  listKnownUsers,
   getKnownUsersStats,
   broadcastMessage,
 } from "../src/proactive.js";
@@ -68,6 +68,8 @@ function loadAccount(accountId = "default"): ResolvedQQBotAccount | null {
           clientSecret,
           enabled: true,
           secretSource: "env",
+          markdownSupport: false,
+          config: {},
         };
       }
 
@@ -91,6 +93,8 @@ function loadAccount(accountId = "default"): ResolvedQQBotAccount | null {
         clientSecret: qqbot.clientSecret || process.env.QQBOT_CLIENT_SECRET,
         enabled: qqbot.enabled ?? true,
         secretSource: qqbot.clientSecret ? "config" : "env",
+        markdownSupport: false,
+        config: {},
       };
     }
 
@@ -103,6 +107,8 @@ function loadAccount(accountId = "default"): ResolvedQQBotAccount | null {
           accountConfig.clientSecret || qqbot.clientSecret || process.env.QQBOT_CLIENT_SECRET,
         enabled: accountConfig.enabled ?? true,
         secretSource: accountConfig.clientSecret ? "config" : "env",
+        markdownSupport: false,
+        config: {},
       };
     }
 
@@ -161,7 +167,7 @@ QQBot 主动消息 CLI 工具
   // 列出已知用户
   if (args.list) {
     const users = listKnownUsers({
-      type: args.type as "c2c" | "group" | "channel" | undefined,
+      type: args.type as "c2c" | "group" | undefined,
       accountId: args.account as string | undefined,
       limit,
     });
@@ -176,7 +182,7 @@ QQBot 主动消息 CLI 工具
     console.log("─".repeat(100));
 
     for (const user of users) {
-      const lastTime = new Date(user.lastInteractionAt).toLocaleString();
+      const lastTime = new Date(user.lastSeenAt).toLocaleString();
       console.log(
         `${user.type}\t\t${user.openid.slice(0, 20)}...\t${user.nickname || "-"}\t\t${lastTime}`,
       );
@@ -188,10 +194,9 @@ QQBot 主动消息 CLI 工具
   if (args.stats) {
     const stats = getKnownUsersStats(args.account as string | undefined);
     console.log(`\n用户统计:`);
-    console.log(`  总计: ${stats.total}`);
-    console.log(`  私聊: ${stats.c2c}`);
-    console.log(`  群聊: ${stats.group}`);
-    console.log(`  频道: ${stats.channel}`);
+    console.log(`  总计: ${stats.totalUsers}`);
+    console.log(`  私聊: ${stats.c2cUsers}`);
+    console.log(`  群聊: ${stats.groupUsers}`);
     return;
   }
 
